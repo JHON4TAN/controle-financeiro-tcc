@@ -6,12 +6,13 @@ import path from "path";
 
 const router = Router();
 
-
+// Obtém o ID do usuário através do header da requisição
 const obterUsuarioId = (req: any) => {
   
   return req.headers["x-usuario-id"] ? parseInt(req.headers["x-usuario-id"]) : null;
 };
 
+// Configuração do upload de imagens
 const upload = multer({
   dest: "uploads/",
   limits: {
@@ -19,17 +20,24 @@ const upload = multer({
   },
 });
 
+// Disponibiliza a pasta de uploads publicamente
 router.use("/uploads", express.static("uploads"))
+
+// ===== AUTENTICAÇÃO =====
+
+// Cadastro de usuário
 
 router.post("/api/register", async (req, res) => {
   try {
     const { nome, email, senha } = req.body;
     
+    // Verifica se o e-mail já existe
     const usuarioExistente = await queries.obterUsuarioPorEmail(email);
     if (usuarioExistente) {
       return res.status(400).json({ error: "Email já cadastrado" });
     }
 
+// Cria novo usuário
     const usuario = await queries.criarUsuario({
       nome,
       email,
@@ -42,11 +50,13 @@ router.post("/api/register", async (req, res) => {
   }
 });
 
+// Login do usuário
 router.post("/api/login", async (req, res) => {
   try {
     const { email, senha } = req.body;
     const usuario = await queries.obterUsuarioPorEmail(email);
 
+    // Validação das credenciais
     if (!usuario || usuario.senha !== senha) {
       return res.status(401).json({ error: "Credenciais inválidas" });
     }
@@ -71,7 +81,7 @@ router.get("/api/transacoes", async (req, res) => {
   }
 });
 
-// Criar transação
+// Cria nova transação financeira
 router.post("/api/transacoes", async (req, res) => {
   try {
     const usuarioId = obterUsuarioId(req);
@@ -82,6 +92,7 @@ router.post("/api/transacoes", async (req, res) => {
 
     const { descricao, valor, data, tipo, categoriaId } = req.body;
 
+    // Salva transação no banco
     const transacao = await queries.criarTransacao({
       usuarioId,
       descricao,
@@ -91,7 +102,7 @@ router.post("/api/transacoes", async (req, res) => {
       categoriaId,
     });
 
-    // 🔔 Criar notificação
+     // Cria notificação automática
     await queries.criarNotificacao({
       usuarioId,
       texto: `Nova transação adicionada: ${descricao}`,
@@ -105,7 +116,7 @@ router.post("/api/transacoes", async (req, res) => {
   }
 });
 
-// Atualizar transação
+// Atualiza transação existente
 router.put("/api/transacoes/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -125,7 +136,7 @@ router.put("/api/transacoes/:id", async (req, res) => {
   }
 });
 
-// Deletar transação
+// Remove transação financeira
 router.delete("/api/transacoes/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -143,7 +154,7 @@ router.delete("/api/transacoes/:id", async (req, res) => {
 
 // ===== CATEGORIAS =====
 
-// Listar todas as categorias do usuário
+// Lista todas as categorias do usuário
 router.get("/api/categorias", async (req, res) => {
   try {
     const usuarioId = obterUsuarioId(req);
@@ -155,7 +166,7 @@ router.get("/api/categorias", async (req, res) => {
   }
 });
 
-// Criar categoria
+// Cria nova categoria
 router.post("/api/categorias", async (req, res) => {
   try {
     const usuarioId = obterUsuarioId(req);
@@ -176,7 +187,7 @@ router.post("/api/categorias", async (req, res) => {
   }
 });
 
-// Atualizar categoria
+// Atualiza categoria
 router.put("/api/categorias/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -195,7 +206,7 @@ router.put("/api/categorias/:id", async (req, res) => {
   }
 });
 
-// Deletar categoria
+// Deleta categoria
 router.delete("/api/categorias/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -225,7 +236,7 @@ router.get("/api/metas", async (req, res) => {
   }
 });
 
-// Criar meta
+// Criar nova meta financeira
 router.post("/api/metas", async (req, res) => {
   try {
     const usuarioId = obterUsuarioId(req);
@@ -245,7 +256,7 @@ router.post("/api/metas", async (req, res) => {
       tipo,
     });
 
-    // 🔔 Criar notificação
+    // Gera notificação automática
     await queries.criarNotificacao({
       usuarioId,
       texto: `Nova meta criada: ${descricao}`,
@@ -259,7 +270,7 @@ router.post("/api/metas", async (req, res) => {
   }
 });
 
-// Deletar meta
+// Remove meta financeira
 router.delete("/api/metas/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -275,6 +286,10 @@ router.delete("/api/metas/:id", async (req, res) => {
   }
 });
 
+
+// ===== PERFIL =====
+
+// Atualiza usuário com upload de foto
 router.put(
   "/usuarios/:id",
   upload.single("fotoPerfil"),
@@ -298,6 +313,7 @@ router.put(
   }
 );
 
+// Remove conta do usuário
 router.delete("/api/usuarios/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -320,7 +336,7 @@ router.delete("/api/usuarios/:id", async (req, res) => {
 
 // ===== NOTIFICAÇÕES =====
 
-// Listar todas as notificações do usuário
+// Lista todas as notificações do usuário
 router.get("/api/notificacoes", async (req, res) => {
   try {
     const usuarioId = obterUsuarioId(req);
@@ -343,7 +359,7 @@ router.put("/api/notificacoes/:id/lida", async (req, res) => {
   }
 });
 
-// Deletar notificação
+// Deleta notificação
 router.delete("/api/notificacoes/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -359,7 +375,7 @@ router.delete("/api/notificacoes/:id", async (req, res) => {
   }
 });
 
-// Atualizar perfil
+// Atualiza informações do perfil
 router.put("/api/perfil/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -388,7 +404,7 @@ router.put("/api/perfil/:id", async (req, res) => {
   }
 });
 
-// Alterar senha
+// Alteração de senha
 router.put("/api/alterar-senha/:id", async (req, res) => {
   try {
     const { id } = req.params;

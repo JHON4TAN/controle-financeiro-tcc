@@ -1,11 +1,12 @@
 import { db } from "./db";
 import { sql } from "drizzle-orm";
 
+// Executa a criação das estruturas do banco de dados
 async function migrate() {
   console.log("⏳ Iniciando migração...");
   
   try {
-    // Criar Enums
+    // Criação dos tipos ENUM utilizados pelo sistema
     await db.execute(sql`DO $$ BEGIN
       CREATE TYPE transacao_tipo AS ENUM ('receita', 'despesa');
     EXCEPTION
@@ -30,7 +31,7 @@ async function migrate() {
       WHEN duplicate_object THEN null;
     END $$;`);
 
-    // Criar Tabelas
+    // Criação das Tabelas
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS usuarios (
         id SERIAL PRIMARY KEY,

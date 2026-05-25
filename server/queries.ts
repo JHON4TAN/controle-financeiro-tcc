@@ -16,11 +16,13 @@ import type {
 
 // ===== USUÁRIOS =====
 
+// Cria um novo usuário no banco de dados
 export async function criarUsuario(dados: NovoUsuario): Promise<Usuario> {
   const [usuario] = await db.insert(usuarios).values(dados).returning();
   return usuario;
 }
 
+// Busca usuário pelo e-mail para autenticação
 export async function obterUsuarioPorEmail(email: string): Promise<Usuario | null> {
   const [usuario] = await db
     .select()
@@ -29,6 +31,7 @@ export async function obterUsuarioPorEmail(email: string): Promise<Usuario | nul
   return usuario || null;
 }
 
+// Busca um usuário através do ID
 export async function obterUsuarioPorId(id: number): Promise<Usuario | null> {
   const [usuario] = await db
     .select()
@@ -37,6 +40,7 @@ export async function obterUsuarioPorId(id: number): Promise<Usuario | null> {
   return usuario || null;
 }
 
+// Atualiza os dados do usuário
 export async function atualizarUsuario(
   id: number,
   dados: Partial<NovoUsuario>
@@ -55,6 +59,7 @@ export async function atualizarUsuario(
   return usuario;
 }
 
+// Remove usuário e seus dados relacionados
 export const deletarUsuario = async (
   id: number
 ) => {
@@ -68,11 +73,13 @@ export const deletarUsuario = async (
 
 // ===== CATEGORIAS =====
 
+// Cria uma nova categoria personalizada
 export async function criarCategoria(dados: NovaCategoria): Promise<Categoria> {
   const [categoria] = await db.insert(categorias).values(dados).returning();
   return categoria;
 }
 
+// Lista todas as categorias cadastradas pelo usuário
 export async function listarCategorias(usuarioId: number): Promise<Categoria[]> {
   return db
     .select()
@@ -81,6 +88,7 @@ export async function listarCategorias(usuarioId: number): Promise<Categoria[]> 
     .orderBy(desc(categorias.criadoEm));
 }
 
+// Busca categoria através do ID
 export async function obterCategoriaPorId(id: number): Promise<Categoria | null> {
   const [categoria] = await db
     .select()
@@ -89,6 +97,7 @@ export async function obterCategoriaPorId(id: number): Promise<Categoria | null>
   return categoria || null;
 }
 
+// Atualiza as informações da categoria
 export async function atualizarCategoria(
   id: number,
   dados: Partial<NovaCategoria>
@@ -101,6 +110,7 @@ export async function atualizarCategoria(
   return categoria;
 }
 
+// Remove categoria do sistema
 export async function deletarCategoria(id: number): Promise<boolean> {
   const resultado = await db
     .delete(categorias)
@@ -110,11 +120,13 @@ export async function deletarCategoria(id: number): Promise<boolean> {
 
 // ===== TRANSAÇÕES =====
 
+// Registra uma nova transação financeira
 export async function criarTransacao(dados: NovaTransacao): Promise<Transacao> {
   const [transacao] = await db.insert(transacoes).values(dados).returning();
   return transacao;
 }
 
+// Lista todas as transações do usuário ordenadas por data
 export async function listarTransacoes(usuarioId: number): Promise<Transacao[]> {
   return db
     .select()
@@ -123,6 +135,7 @@ export async function listarTransacoes(usuarioId: number): Promise<Transacao[]> 
     .orderBy(desc(transacoes.data));
 }
 
+// Filtra transações por período específico
 export async function listarTransacoesPorPeriodo(
   usuarioId: number,
   dataInicio: Date,
@@ -141,6 +154,7 @@ export async function listarTransacoesPorPeriodo(
     .orderBy(desc(transacoes.data));
 }
 
+// Busca transação pelo ID
 export async function obterTransacaoPorId(id: number): Promise<Transacao | null> {
   const [transacao] = await db
     .select()
@@ -149,6 +163,7 @@ export async function obterTransacaoPorId(id: number): Promise<Transacao | null>
   return transacao || null;
 }
 
+// Atualiza os dados de uma transação financeira
 export async function atualizarTransacao(
   id: number,
   dados: Partial<NovaTransacao>
@@ -161,6 +176,7 @@ export async function atualizarTransacao(
   return transacao;
 }
 
+// Remove transação financeira do sistema
 export async function deletarTransacao(id: number): Promise<boolean> {
   const resultado = await db
     .delete(transacoes)
@@ -170,11 +186,13 @@ export async function deletarTransacao(id: number): Promise<boolean> {
 
 // ===== METAS =====
 
+// Cria uma nova meta financeira
 export async function criarMeta(dados: NovaMeta): Promise<Meta> {
   const [meta] = await db.insert(metas).values(dados).returning();
   return meta;
 }
 
+// Lista metas cadastradas pelo usuário
 export async function listarMetas(usuarioId: number): Promise<Meta[]> {
   return db
     .select()
@@ -183,6 +201,7 @@ export async function listarMetas(usuarioId: number): Promise<Meta[]> {
     .orderBy(desc(metas.criadoEm));
 }
 
+// Busca meta financeira através do ID
 export async function obterMetaPorId(id: number): Promise<Meta | null> {
   const [meta] = await db
     .select()
@@ -191,6 +210,7 @@ export async function obterMetaPorId(id: number): Promise<Meta | null> {
   return meta || null;
 }
 
+// Atualiza informações da meta financeira
 export async function atualizarMeta(
   id: number,
   dados: Partial<NovaMeta>
@@ -203,6 +223,7 @@ export async function atualizarMeta(
   return meta;
 }
 
+// Remove meta financeira cadastrada
 export async function deletarMeta(id: number): Promise<boolean> {
   const resultado = await db
     .delete(metas)
@@ -212,6 +233,7 @@ export async function deletarMeta(id: number): Promise<boolean> {
 
 // ===== NOTIFICAÇÕES =====
 
+// Cria uma nova notificação para o usuário
 export async function criarNotificacao(
   dados: NovaNotificacao
 ): Promise<Notificacao> {
@@ -222,6 +244,7 @@ export async function criarNotificacao(
   return notificacao;
 }
 
+// Lista notificações do usuário
 export async function listarNotificacoes(usuarioId: number): Promise<Notificacao[]> {
   return db
     .select()
@@ -230,6 +253,7 @@ export async function listarNotificacoes(usuarioId: number): Promise<Notificacao
     .orderBy(desc(notificacoes.criadoEm));
 }
 
+// Marca notificação como visualizada
 export async function marcarNotificacaoComoLida(id: number): Promise<Notificacao> {
   const [notificacao] = await db
     .update(notificacoes)
@@ -239,6 +263,7 @@ export async function marcarNotificacaoComoLida(id: number): Promise<Notificacao
   return notificacao;
 }
 
+// Remove notificação do sistema
 export async function deletarNotificacao(id: number): Promise<boolean> {
   const resultado = await db
     .delete(notificacoes)

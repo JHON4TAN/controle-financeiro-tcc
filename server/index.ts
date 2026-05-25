@@ -9,20 +9,18 @@ import { testConnection } from "./db";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Inicializa o servidor principal da aplicação
 async function startServer() {
   const app = express();
 
-  // =========================
-  // 🔥 STATIC PATH PRIMEIRO
-  // =========================
+
+  // Define o diretório de arquivos estáticos do frontend
   const staticPath =
     process.env.NODE_ENV === "production"
       ? path.resolve(__dirname, "public")
       : path.resolve(__dirname, "..", "dist", "public");
 
-  // =========================
-  // 🔥 CORS CONFIG
-  // =========================
+// Configuração de CORS para permitir comunicação com o frontend
   app.use(
     cors({
       origin: "http://localhost:3000",
@@ -34,19 +32,13 @@ async function startServer() {
   // Preflight
   app.options("*", cors());
 
-  // =========================
-  // 🔥 MIDDLEWARE JSON
-  // =========================
+ // Middleware responsável por interpretar JSON nas requisições
   app.use(express.json());
 
-  // =========================
-  // 🔥 TESTE BANCO
-  // =========================
+// Testa a conexão com o banco de dados antes de iniciar o servidor
   await testConnection();
 
-  // =========================
-  // 🔥 API ROUTES
-  // =========================
+// Registra as rotas da API da aplicação
   app.use("/api", router);
 
   // =========================
@@ -54,9 +46,7 @@ async function startServer() {
   // =========================
   app.use(express.static(staticPath));
 
-  // =========================
-  // 🔥 FALLBACK FRONTEND
-  // =========================
+// Fallback para suportar rotas do React Router no frontend
   app.get("*", (_req, res) => {
     res.sendFile(path.join(staticPath, "index.html"));
   });

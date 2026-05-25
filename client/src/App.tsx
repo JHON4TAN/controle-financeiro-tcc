@@ -39,6 +39,9 @@ import {
 } from 'recharts';
 import { authAPI, transacaoAPI, categoriaAPI, metaAPI, notificacaoAPI } from "./services/api";
 
+
+// Componente responsável pelos cards de resumo financeiro
+// Exibe informações como saldo, receitas e despesas
 const SummaryCard = ({ title, value, icon: Icon, colorClass, trend }: any) => (
   <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
     <div className="flex items-center gap-4">
@@ -58,6 +61,8 @@ const SummaryCard = ({ title, value, icon: Icon, colorClass, trend }: any) => (
   </div>
 );
 
+// Componente exibido quando não existem dados cadastrados
+// Utilizado em listas vazias e gráficos sem informações
 const EmptyState = ({ icon: Icon, title, description }: any) => (
   <div className="flex flex-col items-center justify-center py-12 text-center">
     <div className="bg-gray-100 p-4 rounded-full mb-4">
@@ -68,17 +73,26 @@ const EmptyState = ({ icon: Icon, title, description }: any) => (
   </div>
 );
 
+// Componente principal da aplicação
 function App() {
+  // Controla qual aba/tela está ativa no sistema
   const [abaAtiva, setAbaAtiva] = useState('dashboard');
+  // Verifica se o usuário está autenticado
   const [logado, setLogado] = useState(false);
+  // Controla carregamento inicial da aplicação
   const [carregou, setCarregou] = useState(false);
+  // Estados utilizados no formulário de autenticação
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
+  // Alterna entre modo login e cadastro
   const [modoAuth, setModoAuth] = useState("login");
+  // Expressão regular utilizada para validar senha forte
   const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+  // Armazena foto de perfil enviada pelo usuário
   const [foto, setFoto] = useState<File | null>(null);
 
+  // Controla visualização das senhas nos formulários
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [mostrarConfirmarSenha, setMostrarConfirmarSenha] = useState(false);
   const [mostrarNovaSenha, setMostrarNovaSenha] = useState(false);
@@ -86,8 +100,10 @@ function App() {
 
   const [mostrarSenhaAtual, setMostrarSenhaAtual] = useState(false);
 
+  // Sistema de notificações toast exibidas na interface
   const [toasts, setToasts] = useState<any[]>([]);
 
+  // Função responsável por exibir mensagens temporárias na tela
   const mostrarToast = (mensagem: string, tipo = "success") => {
     const id = Date.now();
     const novoToast = { id, mensagem, tipo };
@@ -97,25 +113,38 @@ function App() {
     }, 4000);
   };
 
+  // Estados responsáveis pelo gerenciamento das metas financeiras
   const [metas, setMetas] = useState<any>({});
   const [metasHistorico, setMetasHistorico] = useState<any[]>([]);
   const [metasAtuais, setMetasAtuais] = useState<any[]>([]);
   const [metaEditando, setMetaEditando] = useState<any | null>(null);
 
+  // Armazena dados do usuário autenticado
   const [nomeUsuario, setNomeUsuario] = useState("Usuário");
 
+  // Estados utilizados na edição do perfil do usuário
   const [nomeEditavel, setNomeEditavel] = useState("");
   const [emailEditavel, setEmailEditavel] = useState("");
+  // Controla abertura do modal de exclusão de conta
   const [modalExcluirConta, setModalExcluirConta] = useState(false);
+  // Estados utilizados na alteração de senha
   const [senhaAtual, setSenhaAtual] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
   const [confirmarNovaSenha, setConfirmarNovaSenha] = useState("");
 
+  // Controla exibição do modal de perfil
   const [modalPerfilOpen, setModalPerfilOpen] = useState(false);
 
+
+
   // ===== CARREGAMENTO DE DADOS DA API =====
+
+  // Função responsável por buscar todos os dados do usuário
+  // através da API e atualizar os estados da aplicação
   const carregarDados = async () => {
     try {
+      // Realiza múltiplas requisições simultaneamente
+      // para otimizar o carregamento do sistema
       const [t, c, m, n] = await Promise.all([
         transacaoAPI.listar(),
         categoriaAPI.listar(),
@@ -123,7 +152,8 @@ function App() {
         notificacaoAPI.listar()
       ]);
       
-      // Converter centavos para real para manter compatibilidade com o App original
+      // Conversão dos valores de centavos para reais
+      // para exibição correta na interface
       setTransacoes(t.map((item: any) => ({ ...item, valor: item.valor / 100 })));
       setCategorias(c);
       setMetasHistorico(m.map((item: any) => ({
@@ -142,12 +172,15 @@ function App() {
     }
   };
 
+  // Carrega os dados automaticamente após login
   useEffect(() => {
     if (logado) {
       carregarDados();
     }
   }, [logado]);
 
+  // Verifica se existe sessão salva no localStorage
+  // mantendo o usuário autenticado
   useEffect(() => {
     const saved = localStorage.getItem("usuarioLogado");
     if (saved) {
@@ -163,19 +196,23 @@ function App() {
     }
   }, []);
 
+  // Define saudação dinâmica baseada no horário atual
   const hora = new Date().getHours();
   let saudacao = "Bem-vindo";
   if (hora < 12) saudacao = "Bom dia";
   else if (hora < 18) saudacao = "Boa tarde";
   else saudacao = "Boa noite";
 
+  // Controla abertura do menu de perfil
   const [menuPerfilAberto, setMenuPerfilAberto] = useState(false);
   const [telaPerfil, setTelaPerfil] = useState<string | null>(null);
 
+  // Armazena notificações do usuário
   const [notificacoes, setNotificacoes] = useState<any[]>([]);
-
   const [abrirNotificacoes, setAbrirNotificacoes] = useState(false);
 
+  // Marca uma notificação como lida
+// e atualiza a interface em tempo real
   const marcarComoLida = async (id: number) => {
     try {
       await notificacaoAPI.marcarComoLida(id);
@@ -196,13 +233,17 @@ function App() {
   }
 };
 
+// Define imagem de perfil padrão caso usuário não tenha foto
   const [fotoPerfil, setFotoPerfil] = useState(
     localStorage.getItem("fotoPerfil") || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
   );
 
+  // Referência utilizada para controle de menus e modais
   const menuRef = useRef(null);
+  // Estados responsáveis pelos modais da aplicação
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  // Estado utilizado no cadastro de categorias
   const [novaCategoria, setNovaCategoria] = useState({
     nome: '',
     tipo: 'despesa',
@@ -212,9 +253,11 @@ function App() {
   const [isDeleteCategoryModalOpen, setIsDeleteCategoryModalOpen] = useState(false);
   const [categoriaSelecionada, setCategoriaSelecionada] = useState("");
   const [confirmandoExclusao, setConfirmandoExclusao] = useState(false);
+  // Lista de transações financeiras cadastradas
   const [transacoes, setTransacoes] = useState<any[]>([]);
   const [transacaoEmEdicao, setTransacaoEmEdicao] = useState<any>(null);
 
+  // Preenche formulário automaticamente ao editar transação
   const editarTransacao = (transacao: any) => {
     setTransacaoEmEdicao(transacao);
     setNovaTransacao({
@@ -227,6 +270,7 @@ function App() {
     setIsModalOpen(true);
   };
 
+  // Remove transação do banco e atualiza interface
   const excluirTransacao = async (id: number) => {
     try {
       await transacaoAPI.deletar(id);
@@ -239,6 +283,7 @@ function App() {
     }
   };
 
+  // Configurações personalizáveis do sistema
   const [config, setConfig] = useState({
     darkMode: false,
     notificacoes: true,
@@ -247,6 +292,7 @@ function App() {
     moeda: 'BRL'
   });
 
+  // Exporta todos os dados financeiros do usuário em JSON
   const exportarDados = () => {
   const dados = {
     usuario: {
@@ -263,6 +309,7 @@ function App() {
     exportadoEm: new Date().toISOString(),
   };
 
+  // Criação de arquivo para download dos dados exportados
   const blob = new Blob(
     [JSON.stringify(dados, null, 2)],
     {
@@ -287,6 +334,10 @@ function App() {
   );
 };
 
+// ===== EXCLUSÃO DE CONTA =====
+
+// Remove a conta do usuário do banco de dados
+// e encerra a sessão local
 const excluirConta = async () => {
   try {
     const usuario = JSON.parse(
@@ -315,7 +366,10 @@ const excluirConta = async () => {
 };
 
 
+// ===== FORMATAÇÃO DE NOTIFICAÇÕES =====
 
+// Converte a data da notificação em um texto amigável
+// Exemplo: "Há 2 horas", "Ontem às 14:30"
 const formatarTempoNotificacao = (dataString: string) => {
   const data = new Date(dataString);
   const agora = new Date();
@@ -370,6 +424,10 @@ const formatarTempoNotificacao = (dataString: string) => {
   const hoje = new Date().getDate();
   const dicaDoDia = dicas[hoje % dicas.length];
 
+  // ===== CONFIGURAÇÃO DE TEMA =====
+
+// Alterna automaticamente entre modo claro e escuro
+// aplicando a classe "dark" no documento HTML
   useEffect(() => {
     if (config.darkMode) {
       document.documentElement.classList.add('dark');
@@ -407,6 +465,10 @@ const formatarTempoNotificacao = (dataString: string) => {
     categoria: ''
   });
 
+  // ===== GERENCIAMENTO DE TRANSAÇÕES =====
+
+// Salva uma nova transação ou atualiza uma existente
+// realizando conversão de valores para centavos
   const handleSalvar = async (e: any) => {
     e.preventDefault();
     const valorNumerico = parseFloat(
@@ -510,6 +572,10 @@ const formatarTempoNotificacao = (dataString: string) => {
 
   const [itensPorPagina] = useState(10);
 
+  // ===== FILTRO E PAGINAÇÃO =====
+
+// Filtra transações por descrição, categoria,
+// tipo e intervalo de datas
   const transacoesFiltradas = transacoes.filter(t => {
     const termoBusca = filtros.busca.toLowerCase();
     const catNome = categorias.find(c => c.id === t.categoriaId)?.nome || "Geral";
@@ -531,6 +597,9 @@ const formatarTempoNotificacao = (dataString: string) => {
     filtros.pagina * itensPorPagina
   );
 
+  // ===== KPIs FINANCEIROS =====
+
+// Calcula receitas, despesas e saldo do mês atual
   const obterKPIsInteligentes = () => {
     const agora = new Date();
     const mesAtual = agora.getMonth();
@@ -553,6 +622,10 @@ const formatarTempoNotificacao = (dataString: string) => {
 
   const kpis = obterKPIsInteligentes();
 
+  // ===== GRÁFICO COMPARATIVO =====
+
+// Gera os dados dos últimos 6 meses
+// para exibição nos gráficos do dashboard
   const obterComparativoMeses = () => {
     const meses = [];
     const agora = new Date();
@@ -583,6 +656,10 @@ const formatarTempoNotificacao = (dataString: string) => {
   });
   const [modalExcluir, setModalExcluir] = useState({ aberto: false, indice: null as number | null });
 
+
+  // ===== GERENCIAMENTO DE METAS =====
+
+// Cria uma nova meta financeira mensal
   const adicionarMetaMensal = async () => {
     if (!metaMensal.nome || !metaMensal.mes || !metaMensal.limite || metaMensal.limite <= 0) {
       mostrarToast("Preencha todos os campos", "error");
@@ -691,6 +768,10 @@ const formatarTempoNotificacao = (dataString: string) => {
     }
   };
 
+  // ===== ATUALIZAÇÃO DE PERFIL =====
+
+// Atualiza os dados do usuário incluindo
+// foto de perfil enviada via formulário
   const salvarPerfil = async () => {
   try {
     const usuario = JSON.parse(
@@ -738,6 +819,10 @@ const formatarTempoNotificacao = (dataString: string) => {
   }
 };
 
+// ===== TELA DE AUTENTICAÇÃO =====
+
+// Exibe a interface de login, cadastro
+// e recuperação de senha quando o usuário não está autenticado
   if (!logado) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center p-4">
@@ -750,6 +835,10 @@ const formatarTempoNotificacao = (dataString: string) => {
               <p className="text-gray-500 mt-2">Gestão financeira inteligente</p>
             </div>
 
+{/*// ===== PROCESSAMENTO DE LOGIN E CADASTRO =====
+
+// Realiza autenticação do usuário ou criação de conta
+// dependendo do modo selecionado */}
             <form
               onSubmit={async (e) => {
                 e.preventDefault();
@@ -796,12 +885,18 @@ const formatarTempoNotificacao = (dataString: string) => {
                   }
                 }
 
+                // ===== VALIDAÇÃO DE CADASTRO =====
+
+                // Verifica se as senhas coincidem
                 if (modoAuth === "cadastro") {
                   if (senha !== confirmarSenha) {
                     mostrarToast("As senhas não coincidem", "error");
                     return;
                   }
 
+                  // Validação de segurança da senha
+                  // Exige letras maiúsculas, minúsculas,
+                  // números e caracteres especiais
                   if (!regex.test(senha)) {
                     mostrarToast("Senha fraca! Use: 8+ caracteres, 1 maiúscula, 1 minúscula, 1 número, 1 símbolo", "error");
                     return;
@@ -833,6 +928,11 @@ const formatarTempoNotificacao = (dataString: string) => {
                 className="w-full bg-gray-50 rounded-xl p-4 outline-none focus:ring-2 focus:ring-blue-500"
               />
 
+            {/* // ===== CAMPO DE SENHA =====
+
+            // Permite alternar entre visualizar
+            // ou ocultar a senha digitada*/}
+
               {modoAuth !== "recuperar" && (
                 <div className="relative">
                   <input
@@ -854,6 +954,10 @@ const formatarTempoNotificacao = (dataString: string) => {
                 </div>
               )}
 
+                {/*// ===== OPÇÕES DE LOGIN =====
+
+                // Mantém a sessão ativa e permite
+                // recuperação de senha */}
               {modoAuth === "login" && (
                 <div className="flex items-center justify-between">
                   <label className="flex items-center gap-2 cursor-pointer">
@@ -875,6 +979,11 @@ const formatarTempoNotificacao = (dataString: string) => {
                   </button>
                 </div>
               )}
+
+                {/* // ===== RECUPERAÇÃO DE SENHA =====
+
+                // Simula envio de recuperação de senha
+                // para o e-mail informado*/}
 
               {modoAuth === "recuperar" && (
                 <button
@@ -898,6 +1007,10 @@ const formatarTempoNotificacao = (dataString: string) => {
                 </button>
               )}
 
+                {/*// ===== CONFIRMAÇÃO DE SENHA =====
+
+                // Campo adicional exibido apenas
+                // durante o cadastro de usuário */}
               {modoAuth === "cadastro" && (
                 <div className="relative">
                   <input
@@ -919,6 +1032,10 @@ const formatarTempoNotificacao = (dataString: string) => {
                 </div>
               )}
 
+                {/* // ===== BOTÃO PRINCIPAL =====
+
+                // Exibe ações diferentes conforme
+                // o modo atual do formulário*/}
               {modoAuth !== "recuperar" && (
                 <button
                   type="submit"
@@ -929,7 +1046,11 @@ const formatarTempoNotificacao = (dataString: string) => {
                 </button>
               )}
             </form>
+              {/*
+              // ===== ALTERNÂNCIA ENTRE LOGIN E CADASTRO =====
 
+              // Permite alternar entre tela de login
+              // e criação de conta */}
             <p className="text-sm text-gray-500 mt-6 text-center">
               {modoAuth === "login"
                 ? "Não tem conta?"
@@ -947,6 +1068,11 @@ const formatarTempoNotificacao = (dataString: string) => {
               </button>
             </p>
           </div>
+
+            {/* // ===== TOASTS / ALERTAS VISUAIS =====
+
+            // Exibe mensagens temporárias de sucesso,
+            // erro ou informação ao usuário */}
 
           <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
             {toasts.map((toast) => (
@@ -1045,6 +1171,7 @@ const formatarTempoNotificacao = (dataString: string) => {
             <h1 className={`text-lg font-bold ${config.darkMode ? "text-white" : "text-gray-800"}`}>Insight Ledger</h1>
           </div>
 
+          {/* Saudação do usuário */}
           <div className="text-center md:text-left order-2 md:order-1">
             <h2
               onClick={() => setAbaAtiva('dashboard')}
@@ -1057,6 +1184,7 @@ const formatarTempoNotificacao = (dataString: string) => {
             </p>
           </div>
 
+              {/* Área de notificações e perfil */}
           <div className="flex items-center justify-end gap-3 md:gap-4 order-1 md:order-2">
             <div className="relative">
               <button
@@ -1150,9 +1278,12 @@ const formatarTempoNotificacao = (dataString: string) => {
           </div>
         </header>
 
+              {/* Dashboard */}
         {abaAtiva === 'dashboard' && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8 md:mb-12">
+
+              {/* Cards resumo financeiro */}
               <SummaryCard
                 title="Saldo Total"
                 value={config.ocultarValores ? "••••••" : formatarMoeda(saldo)}
@@ -1181,6 +1312,7 @@ const formatarTempoNotificacao = (dataString: string) => {
               />
             </div>
 
+            {/* Gráfico de fluxo de caixa */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
               <div className={`lg:col-span-2 ${config.darkMode ? "bg-gray-800" : "bg-white"} p-6 md:p-8 rounded-3xl border ${config.darkMode ? "border-gray-700" : "border-gray-100"} shadow-sm`}>
                 <div className="flex items-center justify-between mb-8">
@@ -1206,6 +1338,7 @@ const formatarTempoNotificacao = (dataString: string) => {
                 </div>
               </div>
 
+              {/* Últimas transações */}
               <div className={`flex flex-col gap-6 md:gap-8`}>
                 <div className={`${config.darkMode ? "bg-gray-800" : "bg-white"} p-6 md:p-8 rounded-3xl border ${config.darkMode ? "border-gray-700" : "border-gray-100"} shadow-sm`}>
                   <div className="flex items-center justify-between mb-6">
@@ -1249,6 +1382,7 @@ const formatarTempoNotificacao = (dataString: string) => {
           </div>
         )}
 
+        {/* Aba de transações */}
         {abaAtiva === 'transacoes' && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex justify-between items-center mb-8">
@@ -1349,6 +1483,7 @@ const formatarTempoNotificacao = (dataString: string) => {
           </div>
         )}
 
+        {/* Aba de metas */}
         {abaAtiva === 'metas' && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -1356,6 +1491,8 @@ const formatarTempoNotificacao = (dataString: string) => {
                 <div className={`${config.darkMode ? "bg-gray-800" : "bg-white"} p-8 rounded-3xl border ${config.darkMode ? "border-gray-700" : "border-gray-100"} shadow-sm`}>
                   <h3 className={`text-xl font-bold mb-6 ${config.darkMode ? "text-white" : "text-gray-800"}`}>
                     {metaEmEdicao !== null ? 'Editar Meta' : 'Nova Meta'}
+
+                    {/* Formulário de metas */}
                   </h3>
                   <div className="space-y-6">
                     <div className="space-y-2">
@@ -1466,6 +1603,7 @@ const formatarTempoNotificacao = (dataString: string) => {
                       const porcentagem = Math.min((totalPeriodo / meta.limite) * 100, 100);
                       const corProgresso = meta.tipo === 'limite' ? (porcentagem > 90 ? 'bg-rose-500' : (porcentagem > 70 ? 'bg-amber-500' : 'bg-blue-600')) : (porcentagem === 100 ? 'bg-green-500' : 'bg-blue-600');
 
+                      {/* Progresso da meta atual */}
                       return (
                         <div className="space-y-8 relative z-10">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
@@ -1500,6 +1638,7 @@ const formatarTempoNotificacao = (dataString: string) => {
                   </div>
                 )}
 
+                {/* Histórico de metas */}
                 <div className={`${config.darkMode ? "bg-gray-800" : "bg-white"} p-8 rounded-3xl border ${config.darkMode ? "border-gray-700" : "border-gray-100"} shadow-sm`}>
                   <h3 className={`text-xl font-bold mb-8 ${config.darkMode ? "text-white" : "text-gray-800"}`}>Histórico</h3>
                   <div className="overflow-x-auto">
@@ -1542,6 +1681,7 @@ const formatarTempoNotificacao = (dataString: string) => {
               </div>
             </div>
 
+                    {/* Modal de confirmação para excluir metas */}
             {modalExcluir.aberto && (
               <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[100] p-4">
                 <div className={`${config.darkMode ? "bg-gray-800" : "bg-white"} w-full max-w-sm rounded-3xl p-8 shadow-2xl`}>
@@ -1572,6 +1712,7 @@ const formatarTempoNotificacao = (dataString: string) => {
           </div>
         )}
 
+        {/* Aba de gerenciamento de categorias */}
         {abaAtiva === 'categorias' && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex justify-between items-center mb-8">
@@ -1598,6 +1739,7 @@ const formatarTempoNotificacao = (dataString: string) => {
               </div>
             </div>
 
+                  {/* Cards das categorias cadastradas */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {categorias.map((cat) => (
                 <div
@@ -1623,6 +1765,7 @@ const formatarTempoNotificacao = (dataString: string) => {
           </div>
         )}
 
+        {/* Aba de configurações do sistema */}
         {abaAtiva === 'configuracoes' && (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl">
           
@@ -1774,6 +1917,7 @@ const formatarTempoNotificacao = (dataString: string) => {
       </main>
 
       {/* MODAIS */}
+      {/* Modal de criação/edição de transações */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300">
           <div className={`${config.darkMode ? "bg-gray-800" : "bg-white"} w-full max-w-md rounded-3xl p-8 shadow-2xl animate-in zoom-in-95 duration-300`}>
@@ -1783,6 +1927,7 @@ const formatarTempoNotificacao = (dataString: string) => {
               </h3>
               <button onClick={() => { setIsModalOpen(false); setTransacaoEmEdicao(null); }} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={24} /></button>
             </div>
+            {/* Formulário da transação */}
             <form onSubmit={handleSalvar} className="space-y-6">
               <div className="space-y-2">
                 <label className="text-xs font-bold text-gray-400 uppercase ml-1">Descrição</label>
@@ -1854,6 +1999,8 @@ const formatarTempoNotificacao = (dataString: string) => {
         </div>
       )}
 
+
+      {/* Modal de criação/edição de categorias */}
       {isCategoryModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300">
           <div className={`${config.darkMode ? "bg-gray-800" : "bg-white"} w-full max-w-md rounded-3xl p-8 shadow-2xl animate-in zoom-in-95 duration-300`}>
@@ -1923,6 +2070,8 @@ const formatarTempoNotificacao = (dataString: string) => {
         </div>
       )}
 
+
+      {/* Modal para exclusão de categorias */}
       {isDeleteCategoryModalOpen && (
         <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300">
           <div className={`${config.darkMode ? "bg-gray-800" : "bg-white"} rounded-3xl w-full max-w-sm p-8 shadow-2xl animate-in zoom-in-95 duration-300`}>
@@ -1962,6 +2111,7 @@ const formatarTempoNotificacao = (dataString: string) => {
         </div>
       )}
 
+      {/* Modal de perfil do usuário */}
       {modalPerfilOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-300">
           <div className={`w-full max-w-md p-8 rounded-3xl shadow-2xl transform animate-in zoom-in-95 duration-300 ${config.darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-800"}`}>
@@ -2059,6 +2209,7 @@ const formatarTempoNotificacao = (dataString: string) => {
         </div>
       )}
 
+      {/* Modal de confirmação para excluir conta */}
       {modalExcluirConta && (
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-300">
         <div
@@ -2114,7 +2265,7 @@ const formatarTempoNotificacao = (dataString: string) => {
       </div>
     )}
 
-      {/* Toasts */}
+      {/* Sistema global de notificações (Toasts) */}
       <div className="fixed bottom-6 right-6 z-[200] flex flex-col gap-3">
         {toasts.map((toast) => (
           <div
