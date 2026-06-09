@@ -141,34 +141,52 @@ function App() {
 
   // Função responsável por buscar todos os dados do usuário
   // através da API e atualizar os estados da aplicação
-  const carregarDados = async () => {
+  const carregarDados = async ( ) => {
     try {
-      // Realiza múltiplas requisições simultaneamente
-      // para otimizar o carregamento do sistema
-      const [t, c, m, n] = await Promise.all([
+      console.log("Iniciando busca de dados...");
+      
+      // Usamos allSettled para que, se um falhar, os outros ainda carreguem
+      const resultados = await Promise.allSettled([
         transacaoAPI.listar(),
         categoriaAPI.listar(),
         metaAPI.listar(),
         notificacaoAPI.listar()
       ]);
-      
-      // Conversão dos valores de centavos para reais
-      // para exibição correta na interface
-      setTransacoes(t.map((item: any) => ({ ...item, valor: item.valor / 100 })));
-      setCategorias(c);
-      setMetasHistorico(m.map((item: any) => ({
-        id: `MT-${item.id}`,
-        nome: item.descricao,
-        mes: `${item.ano}-${item.mes.toString().padStart(2, '0')}`,
-        tipo: item.tipo,
-        limite: item.valor / 100,
-        dataCriacao: item.criado_em,
-        dbId: item.id
-      })));
-      setNotificacoes(n);
+
+      // Processa Transações
+      if (resultados[0].status === 'fulfilled') {
+        const t = resultados[0].value;
+        setTransacoes(t.map((item: any) => ({ ...item, valor: item.valor / 100 })));
+      }
+
+      // Processa Categorias
+      if (resultados[1].status === 'fulfilled') {
+        setCategorias(resultados[1].value);
+      }
+
+      // Processa Metas
+      if (resultados[2].status === 'fulfilled') {
+        const m = resultados[2].value;
+        setMetasHistorico(m.map((item: any) => ({
+          id: `MT-${item.id}`,
+          nome: item.descricao,
+          mes: `${item.ano}-${item.mes.toString().padStart(2, '0')}`,
+          tipo: item.tipo,
+          limite: item.valor / 100,
+          dataCriacao: item.criado_em,
+          dbId: item.id
+        })));
+      }
+
+      // Processa Notificações
+      if (resultados[3].status === 'fulfilled') {
+        setNotificacoes(resultados[3].value);
+      }
+
       setCarregou(true);
+      console.log("Dados carregados!");
     } catch (err) {
-      console.error("Erro ao carregar dados:", err);
+      console.error("Erro fatal no carregamento:", err);
     }
   };
 

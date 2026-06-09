@@ -6,75 +6,48 @@ import { fileURLToPath } from "url";
 import router from "./routes";
 import { testConnection } from "./db";
 
-const __filename = fileURLToPath(import.meta.url);
+const __filename = fileURLToPath(import.meta.url );
 const __dirname = path.dirname(__filename);
 
-// Inicializa o servidor principal da aplicação
 async function startServer() {
   const app = express();
+  const port = process.env.PORT || 5000;
 
-
-  // Define o diretório de arquivos estáticos do frontend
-  const staticPath =
-    process.env.NODE_ENV === "production"
+  // DIRETÓRIO ESTÁTICO
+  const staticPath = process.env.NODE_ENV === "production"
       ? path.resolve(__dirname, "public")
       : path.resolve(__dirname, "..", "dist", "public");
 
-// Configuração de CORS para permitir comunicação com o frontend
-  app.use(
-    cors({
-      origin: "http://localhost:3000",
-      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "x-usuario-id"],
-    })
-  );
-
-  // Preflight
-  app.options("*", cors());
-
- // Middleware responsável por interpretar JSON nas requisições
-  app.use(express.json());
-
-// Testa a conexão com o banco de dados antes de iniciar o servidor
-  await testConnection();
-
-// Registra as rotas da API da aplicação
-  app.use("/api", router);
-
-  // =========================
-  // 🔥 STATIC FRONTEND
-  // =========================
-  app.use(express.static(staticPath));
-
-// Fallback para suportar rotas do React Router no frontend
-  app.get("*", (_req, res) => {
-    res.sendFile(path.join(staticPath, "index.html"));
-  });
-
-  const server = createServer(app);
-  const port = process.env.PORT || 5000;
-
-  // Testar conexão com o banco
-  await testConnection();
-
-  // Middlewares
-  app.use(express.json());
-
-  // Rotas da API
-  app.use(router);
-
-  app.use(express.static(staticPath));
+  // CONFIGURAÇÃO DE CORS (Liberado para as duas portas comuns)
+  app.use(cors({
+    origin: ["http://localhost:5173", "http://localhost:3000"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "x-usuario-id"],
+  } ));
 
   app.use(express.json({ limit: "10mb" }));
   app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-  // Handle client-side routing - serve index.html for all routes
-  app.get("*", (_req, res) => {
-    res.sendFile(path.join(staticPath, "index.html"));
+  // BANCO DE DADOS
+  await testConnection();
+
+  // ROTAS - IMPORTANTE: Aqui usamos apenas o router, pois o seu routes.ts já tem o "/api"
+  app.use(router);
+
+  // FRONTEND
+  app.use(express.static(staticPath));
+  app.get("*", (req, res) => {
+    // Se for uma chamada de API que não existe, retorna 404 em JSON
+    if (req.path.startsWith('/api')) return res.status(404).json({ error: "Rota não encontrada" });
+    // Senão, tenta entregar o index.html
+    res.sendFile(path.join(staticPath, "index.html"), (err) => {
+      if (err) res.status(200).send("Servidor API Ativo na porta 5000. Use a porta 5173 para o Frontend.");
+    });
   });
 
+  const server = createServer(app);
   server.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}/`);
+    console.log(`✅ Servidor rodando em http://localhost:${port}` );
   });
 }
 

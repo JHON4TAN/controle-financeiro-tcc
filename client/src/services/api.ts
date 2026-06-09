@@ -1,7 +1,7 @@
 // URL base da API
 // Como o frontend é servido pelo próprio Express,
 // caminhos relativos já funcionam corretamente
-const API_BASE_URL = ""; 
+const API_BASE_URL = "http://localhost:5000";
 
 // Função responsável por montar os headers das requisições
 // Inclui automaticamente o ID do usuário logado
